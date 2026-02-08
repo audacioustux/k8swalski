@@ -31,69 +31,19 @@ tasks:
         cmd: git config --global --add url.{{.AuthURL}}.insteadOf {{.ITEM}}
 
   # Build tasks
-  build:
-    desc: "Build the project"
-    cmd: cargo build
-
   build:release:
     desc: "Build the project in release mode"
     cmd: cargo build --release
 
   # Test tasks
-  test:
-    desc: "Run tests"
-    cmd: cargo test
-
-  test:nextest:
-    desc: "Run tests with nextest"
-    cmd: cargo nextest run
-
   test:watch:
     desc: "Watch and run tests on changes"
     cmd: cargo watch -x test
 
-  # Run tasks
-  run:
-    desc: "Run the server"
-    cmd: cargo run
-
+  # Run tasks  
   run:watch:
     desc: "Watch and run the server on changes"
     cmd: cargo watch -x run
-
-  # Check and lint
-  check:
-    desc: "Check the project for errors"
-    cmd: cargo check
-
-  clippy:
-    desc: "Run clippy linter"
-    cmd: cargo clippy -- -D warnings
-
-  fmt:
-    desc: "Format code"
-    cmd: cargo fmt
-
-  fmt:check:
-    desc: "Check code formatting"
-    cmd: cargo fmt -- --check
-
-  # Docker tasks
-  docker:build:
-    desc: "Build Docker image"
-    cmd: docker compose build
-
-  docker:up:
-    desc: "Start containers"
-    cmd: docker compose up -d
-
-  docker:down:
-    desc: "Stop containers"
-    cmd: docker compose down
-
-  docker:logs:
-    desc: "View logs"
-    cmd: docker compose logs -f
 
   # Documentation tasks
   docs:update:
@@ -101,10 +51,6 @@ tasks:
     cmd: ./scripts/update-readme.sh
 
   # Clean tasks
-  clean:
-    desc: "Clean build artifacts"
-    cmd: cargo clean
-
   clean:docker:
     desc: "Clean Docker build cache"
     cmd: docker builder prune -f

@@ -73,43 +73,16 @@
           # Development tools
           cargo-watch
           cargo-nextest
-          cargo-expand
-          cargo-edit
 
           # Task runner
           go-task
 
           # Shell tools
-          zsh
           direnv
           git
-          gh
-
-          # Utilities
-          jq
-          yq-go
-          ripgrep
-          fd
-          eza
-          bat
-          zoxide
-          fzf
-
-          # Editor
-          neovim
 
           # Nix tooling
-          nixd
           nixfmt
-
-          # Other utilities
-          curl
-          wget
-          tree
-          moreutils
-          pre-commit
-          figlet
-          lolcat
         ];
       in
       {
@@ -118,21 +91,8 @@
 
           shellHook = ''
             ${pre-commit-check.shellHook}
-            echo "🚀 k8swalski Development Environment" | ${pkgs.figlet}/bin/figlet | ${pkgs.lolcat}/bin/lolcat
-            echo ""
-            echo "Rust version: $(rustc --version)"
-            echo "Cargo version: $(cargo --version)"
-            echo ""
-            echo "Available commands:"
-            echo "  cargo build        - Build the project"
-            echo "  cargo test         - Run tests"
-            echo "  cargo nextest run  - Run tests with nextest"
-            echo "  cargo run          - Run the server"
-            echo "  cargo watch        - Watch for changes and rebuild"
-            echo "  task --list        - Show available tasks"
-            echo ""
-            echo "✅ Pre-commit hooks installed"
-            echo ""
+            echo "k8swalski dev environment loaded"
+            echo "Run 'task --list' to see available tasks"
           '';
 
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
