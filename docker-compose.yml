@@ -1,0 +1,25 @@
+services:
+  k8swalski:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - k8swalski:latest
+    image: k8swalski:latest
+    container_name: k8swalski-test
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - HTTP_PORT=8080
+      - HTTPS_PORT=8443
+      - LOG_FORMAT=json
+      - INCLUDE_ENV_VARS=false
+      - PROMETHEUS=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped

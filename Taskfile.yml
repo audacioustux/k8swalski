@@ -1,0 +1,110 @@
+version: '3'
+
+tasks:
+  dev:setup:
+    desc: "Main setup hook (Runs on postCreate)"
+    cmds:
+      - task: dev:shell
+      - task: dev:git
+
+  dev:start:
+    desc: "Startup hook (Runs on postStart)"
+    cmd: git submodule update --init --recursive
+
+  dev:shell:
+    desc: "Apply clean shell configuration"
+    cmds:
+      - cp .devcontainer/.zshrc ~/.zshrc
+      - direnv allow .
+
+  dev:git:
+    desc: "Rewrite Git URLs to use Token (Codespaces Only)"
+    status:
+      - '[ "$CODESPACES" != "true" ]'
+    vars:
+      AuthURL: "https://x-access-token:{{.GITHUB_TOKEN}}@github.com/"
+    cmds:
+      - for: 
+          - "ssh://git@github.com/"
+          - "git@github.com/"
+          - "git@github.com:"
+        cmd: git config --global --add url.{{.AuthURL}}.insteadOf {{.ITEM}}
+
+  # Build tasks
+  build:
+    desc: "Build the project"
+    cmd: cargo build
+
+  build:release:
+    desc: "Build the project in release mode"
+    cmd: cargo build --release
+
+  # Test tasks
+  test:
+    desc: "Run tests"
+    cmd: cargo test
+
+  test:nextest:
+    desc: "Run tests with nextest"
+    cmd: cargo nextest run
+
+  test:watch:
+    desc: "Watch and run tests on changes"
+    cmd: cargo watch -x test
+
+  # Run tasks
+  run:
+    desc: "Run the server"
+    cmd: cargo run
+
+  run:watch:
+    desc: "Watch and run the server on changes"
+    cmd: cargo watch -x run
+
+  # Check and lint
+  check:
+    desc: "Check the project for errors"
+    cmd: cargo check
+
+  clippy:
+    desc: "Run clippy linter"
+    cmd: cargo clippy -- -D warnings
+
+  fmt:
+    desc: "Format code"
+    cmd: cargo fmt
+
+  fmt:check:
+    desc: "Check code formatting"
+    cmd: cargo fmt -- --check
+
+  # Docker tasks
+  docker:build:
+    desc: "Build Docker image"
+    cmd: docker compose build
+
+  docker:up:
+    desc: "Start containers"
+    cmd: docker compose up -d
+
+  docker:down:
+    desc: "Stop containers"
+    cmd: docker compose down
+
+  docker:logs:
+    desc: "View logs"
+    cmd: docker compose logs -f
+
+  # Documentation tasks
+  docs:update:
+    desc: "Update README with CLI help output"
+    cmd: ./scripts/update-readme.sh
+
+  # Clean tasks
+  clean:
+    desc: "Clean build artifacts"
+    cmd: cargo clean
+
+  clean:docker:
+    desc: "Clean Docker build cache"
+    cmd: docker builder prune -f

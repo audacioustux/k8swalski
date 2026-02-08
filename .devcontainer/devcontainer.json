@@ -1,0 +1,63 @@
+{
+    "name": "k8swalski - Rust Development",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "remoteUser": "vscode",
+    "runArgs": [
+        "--init"
+    ],
+    "hostRequirements": {
+        "cpus": 4
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "installOhMyZsh": true,
+            "upgradePackages": true,
+            "username": "vscode"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "nix.formatterPath": "nixfmt",
+                "nix.enableLanguageServer": true,
+                "nix.serverPath": "nixd",
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "editor.formatOnSave": true,
+                "rust-analyzer.checkOnSave.command": "clippy",
+                "rust-analyzer.cargo.features": "all",
+                "github.copilot.chat.codeGeneration.useInstructionFiles": true
+            },
+            "extensions": [
+                "jnoortheen.nix-ide",
+                "rust-lang.rust-analyzer",
+                "vadimcn.vscode-lldb",
+                "serayuzgur.crates",
+                "tamasfe.even-better-toml",
+                "redhat.vscode-yaml",
+                "github.copilot",
+                "mhutchie.git-graph",
+                "Gruntfuggly.todo-tree",
+                "mutantdino.resourcemonitor"
+            ]
+        },
+        "codespaces": {
+            "repositories": {
+                "*": {
+                    "permissions": {
+                        "contents": "write",
+                        "pull_requests": "write",
+                        "issues": "write",
+                        "workflows": "write",
+                        "packages": "write"
+                    }
+                }
+            }
+        }
+    },
+    "postCreateCommand": "task dev:setup",
+    "postStartCommand": "task dev:start"
+}
