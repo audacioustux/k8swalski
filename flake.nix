@@ -151,9 +151,6 @@
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
         };
 
-        # Export packages for devcontainer
-        containerDependencies = devPackages;
-
         checks = {
           pre-commit = pre-commit-check;
         };
