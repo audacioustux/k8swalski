@@ -351,11 +351,11 @@ fn extract_jwt(headers: &HeaderMap, config: &Config) -> Option<JwtInfo> {
     
     let token = headers.get(jwt_header)
         .and_then(|v| v.to_str().ok())
-        .and_then(|v| {
+        .map(|v| {
             if v.to_lowercase().starts_with("bearer ") {
-                Some(&v[7..])
+                &v[7..]
             } else {
-                Some(v)
+                v
             }
         })?;
 
