@@ -7,6 +7,7 @@ authors = ["audacioustux <contact@audacioustux.com>"]
 license = "MIT"
 description = "HTTP/HTTPS echo server for debugging and testing"
 repository = "https://github.com/audacioustux/k8swalski"
+resolver = "2"
 
 [[bin]]
 name = "k8swalski"
@@ -19,7 +20,9 @@ path = "src/lib.rs"
 [dependencies]
 # Web framework
 axum = { version = "0.8", features = ["macros", "http2"] }
-axum-server = { version = "0.8", features = ["tls-rustls"] }
+axum-server = { version = "0.8", default-features = false, features = ["tls-rustls"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "0.26"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "net", "fs"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["trace", "compression-gzip", "limit", "cors"] }
@@ -60,7 +63,7 @@ bytes = "1.5"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "blocking"] }
 
 # Optional features
-jsonwebtoken = { version = "10", optional = true }
+jsonwebtoken = { version = "10", optional = true, default-features = false, features = ["use_pem"] }
 prometheus = { version = "0.14", optional = true }
 
 [features]

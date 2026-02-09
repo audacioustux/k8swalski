@@ -359,19 +359,11 @@ fn extract_jwt(headers: &HeaderMap, config: &Config) -> Option<JwtInfo> {
     let header = jsonwebtoken::decode_header(token).ok()?;
 
     // Decode without verification (just for inspection)
-    let mut validation = jsonwebtoken::Validation::default();
-    validation.insecure_disable_signature_validation();
-    validation.validate_exp = false;
-
-    let decoding_key = jsonwebtoken::DecodingKey::from_secret(&[]);
-
-    // Try to decode payload as generic JSON
-    let payload =
-        if let Ok(token_data) = jsonwebtoken::decode::<Value>(token, &decoding_key, &validation) {
-            Some(token_data.claims)
-        } else {
-            None
-        };
+    let payload = if let Ok(token_data) = jsonwebtoken::dangerous::insecure_decode::<Value>(token) {
+        Some(token_data.claims)
+    } else {
+        None
+    };
 
     Some(JwtInfo { header: serde_json::to_value(header).ok(), payload })
 }
