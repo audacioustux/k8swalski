@@ -4,6 +4,21 @@
 ARG UID=65532
 ARG GID=65532
 
+# Planner stage - analyze dependencies
+FROM chainguard/rust:latest AS planner
+
+WORKDIR /app
+
+# Install cargo-chef
+RUN cargo install cargo-chef
+
+# Copy manifests to create recipe
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+COPY src ./src
+
+# Generate dependency recipe
+RUN cargo chef prepare --recipe-path recipe.json
+
 # Builder stage
 FROM chainguard/rust:latest AS builder
 
@@ -12,13 +27,23 @@ ARG GID
 
 WORKDIR /app
 
-# Copy dependency manifests for better layer caching
-COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+# Install cargo-chef
+RUN cargo install cargo-chef
+
+# Copy recipe from planner
+COPY --from=planner /app/recipe.json recipe.json
+
+# Build dependencies only (cached layer)
+RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,uid=${UID},gid=${GID},sharing=locked \
+    --mount=type=cache,target=/home/nonroot/.cargo/git,uid=${UID},gid=${GID},sharing=locked \
+    --mount=type=cache,target=/app/target,uid=${UID},gid=${GID} \
+    cargo chef cook --release --recipe-path recipe.json
 
 # Copy source code
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY src ./src
 
-# Build with BuildKit cache mounts for incremental compilation
+# Build application with dependencies already cached
 RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,uid=${UID},gid=${GID},sharing=locked \
     --mount=type=cache,target=/home/nonroot/.cargo/git,uid=${UID},gid=${GID},sharing=locked \
     --mount=type=cache,target=/app/target,uid=${UID},gid=${GID} \
