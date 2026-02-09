@@ -41,7 +41,8 @@
                 "mhutchie.git-graph",
                 "Gruntfuggly.todo-tree",
                 "mutantdino.resourcemonitor",
-                "fill-labs.dependi"
+                "fill-labs.dependi",
+                "github.vscode-github-actions"
             ]
         },
         "codespaces": {
