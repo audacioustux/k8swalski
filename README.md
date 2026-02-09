@@ -23,18 +23,16 @@ curl http://localhost:8080/test
 pre-commit installed at .git/hooks/pre-commit
 k8swalski dev environment loaded
 Run 'task --list' to see available tasks
-k8swalski is an HTTP/HTTPS echo server designed for debugging and testing.
-
-It echoes back request details including headers, body, query parameters, and more.
-Perfect for testing webhooks, debugging API clients, or understanding HTTP requests.
+HTTP/HTTPS echo server for debugging and testing.
 
 Features:
-  • Dual HTTP and HTTPS support with configurable ports
-  • Request/response logging in human-readable or JSON format
-  • Optional JWT token decoding
-  • Prometheus metrics endpoint
+  • Dual HTTP/HTTPS support with configurable ports
+  • Request echo (headers, body, query params, IP)
+  • Response manipulation (custom status, delays, content-type)
+  • JWT decoding, Prometheus metrics support
+  • JSON or human-readable logging with path filtering
   • CORS support with flexible configuration
-  • Configurable request body and header size limits
+  • Multi-arch Docker images (amd64, arm64)
 
 Usage: k8swalski [OPTIONS]
 
