@@ -103,6 +103,7 @@
             openssl
             cargo-nextest
             sccache
+            go-task
           ];
 
           shellHook = ''
