@@ -1,8 +1,6 @@
 services:
   k8swalski:
-    build:
-      context: .
-      target: runtime
+    image: ghcr.io/audacioustux/k8swalski:latest
     container_name: k8swalski
     ports:
       - "8080:8080"
