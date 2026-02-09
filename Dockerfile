@@ -3,25 +3,6 @@
 ARG UID=65532
 ARG GID=65532
 
-# Builder stage
-FROM chainguard/rust:latest AS builder
-
-ARG UID
-ARG GID
-
-USER ${UID}:${GID}
-
-WORKDIR /app
-
-# Copy source code
-COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
-COPY src ./src
-
-# Build application
-RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,sharing=locked,uid=${UID},gid=${GID} \
-    --mount=type=cache,target=/home/nonroot/.cargo/git,sharing=locked,uid=${UID},gid=${GID} \
-    cargo build --release && strip target/release/k8swalski
-
 # Runtime stage
 FROM chainguard/wolfi-base:latest
 
@@ -38,8 +19,8 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=builder /app/target/release/k8swalski /app/k8swalski
+# Copy pre-built binary from artifact
+COPY artifact/k8swalski /app/k8swalski
 
 # Run as nonroot user
 USER ${UID}:${GID}
