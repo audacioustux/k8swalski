@@ -29,10 +29,6 @@ curl http://localhost:8080/test
 
 <!-- BEGIN_CLI_HELP -->
 ```
-/home/runner/work/k8swalski/k8swalski/.pre-commit-config.yaml
-pre-commit installed at .git/hooks/pre-commit
-k8swalski dev environment loaded
-Run 'task --list' to see available tasks
 HTTP/HTTPS echo server for debugging and testing
 
 Usage: k8swalski [OPTIONS]
