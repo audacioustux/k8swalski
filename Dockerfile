@@ -2,7 +2,7 @@
 
 # Runtime: Ultra-minimal static base (no shell, no package manager)
 # Runs as non-root user 65532 by default
-FROM chainguard/static:latest
+FROM cgr.dev/chainguard/static:latest
 
 # OCI standard labels
 LABEL org.opencontainers.image.title="k8swalski"
