@@ -4,8 +4,8 @@
 ARG UID=65532
 ARG GID=65532
 
-# Runtime: Minimal Chainguard Wolfi base
-FROM chainguard/wolfi-base:latest
+# Runtime: Ultra-minimal static base (no shell, no package manager)
+FROM chainguard/static:latest
 
 # Re-declare after FROM for use in later stages
 ARG UID
