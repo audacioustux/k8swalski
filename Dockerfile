@@ -3,7 +3,7 @@
 FROM scratch AS artifact
 COPY artifact/k8swalski /k8swalski
 
-FROM cgr.dev/chainguard/static:latest
+FROM cgr.dev/chainguard/static:latest AS ci
 
 LABEL org.opencontainers.image.title="k8swalski"
 LABEL org.opencontainers.image.description="HTTP/HTTPS echo server for debugging and testing"
