@@ -29,7 +29,7 @@ module.exports = async ({ content, filePath, beginMarker, endMarker }) => {
     const beforeMarker = fileContent.substring(0, beginIndex + beginMarker.length);
     const afterMarker = fileContent.substring(endIndex);
     
-    const block = (text, lang = '') => '```' + lang + '\n' + text + '\n```';
+    const block = (text, lang = '') => '```' + lang + '\n' + text.trim() + '\n```';
     
     const updatedContent = beforeMarker + '\n' + block(content) + '\n' + afterMarker;
 
