@@ -19,52 +19,52 @@ path = "src/lib.rs"
 
 [dependencies]
 # Web framework
-axum = { version = "0.8", features = ["macros", "http2"] }
-axum-server = { version = "0.8", default-features = false, features = ["tls-rustls"] }
-rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
-webpki-roots = "1"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "net", "fs"] }
-tower = "0.5"
-tower-http = { version = "0.6", features = ["trace", "compression-gzip", "limit", "cors"] }
+axum = { version = "0.8.8", features = ["macros", "http2"] }
+axum-server = { version = "0.8.0", default-features = false, features = ["tls-rustls"] }
+rustls = { version = "0.23.36", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1.0.6"
+tokio = { version = "1.49.0", features = ["rt-multi-thread", "macros", "signal", "net", "fs"] }
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["trace", "compression-gzip", "limit", "cors"] }
 
 # Serialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 
 # Logging & Tracing
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"] }
 
 # CLI & Configuration
-clap = { version = "4", features = ["derive", "env"] }
+clap = { version = "4.5.57", features = ["derive", "env"] }
 
 # Error handling
-anyhow = "1"
-thiserror = "2"
+anyhow = "1.0.101"
+thiserror = "2.0.18"
 
 # HTTP/TLS
-hyper = { version = "1", features = ["full"] }
-hyper-util = { version = "0.1", features = ["tokio", "server", "server-auto"] }
+hyper = { version = "1.8.1", features = ["full"] }
+hyper-util = { version = "0.1.20", features = ["tokio", "server", "server-auto"] }
 
 # Time and async utilities
-tokio-util = "0.7"
-chrono = { version = "0.4", features = ["serde"] }
-futures = "0.3"
+tokio-util = "0.7.18"
+chrono = { version = "0.4.43", features = ["serde"] }
+futures = "0.3.31"
 
 # Certificate generation
-rcgen = "0.14"
+rcgen = "0.14.7"
 
 # System utilities
-hostname = "0.4"
-url = "2"
-flate2 = "1.0"
-mime_guess = "2.0"
-bytes = "1.5"
-reqwest = { version = "0.13", default-features = false, features = ["rustls", "blocking"] }
+hostname = "0.4.2"
+url = "2.5.8"
+flate2 = "1.1.9"
+mime_guess = "2.0.5"
+bytes = "1.11.1"
+reqwest = { version = "0.13.2", default-features = false, features = ["rustls", "blocking"] }
 
 # Optional features
-jsonwebtoken = { version = "10", optional = true, default-features = false, features = ["use_pem"] }
-prometheus = { version = "0.14", optional = true }
+jsonwebtoken = { version = "10.3.0", optional = true, default-features = false, features = ["use_pem"] }
+prometheus = { version = "0.14.0", optional = true }
 
 [features]
 default = ["jwt", "prometheus", "mtls"]
@@ -74,8 +74,8 @@ mtls = []
 default-certs = []
 
 [dev-dependencies]
-axum-test = "18"
-serde_json = "1"
+axum-test = "18.7.0"
+serde_json = "1.0.149"
 
 [profile.release]
 opt-level = 3

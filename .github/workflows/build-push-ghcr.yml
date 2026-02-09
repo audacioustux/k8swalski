@@ -71,7 +71,7 @@ jobs:
         uses: ./.github/actions/setup-rust-env
       
       - name: Build binary
-        run: nix develop .#ci --command task ci:build-artifact TARGET=${{ matrix.target }}
+        run: nix develop .#ci --command task ci:build TARGET=${{ matrix.target }}
       
       - name: Upload binary artifact
         uses: actions/upload-artifact@v6
