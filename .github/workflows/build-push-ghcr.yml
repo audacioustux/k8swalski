@@ -28,10 +28,10 @@ jobs:
       RUSTC_WRAPPER: "sccache"
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Setup sccache
-        uses: mozilla/sccache-action@v0.0.8
+        uses: mozilla/sccache-action@v0.0.9
       
       - name: Setup Rust Environment
         uses: ./.github/actions/setup-rust-env
@@ -59,10 +59,10 @@ jobs:
             target: aarch64-unknown-linux-gnu
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
       
       - name: Setup sccache
-        uses: mozilla/sccache-action@v0.0.8
+        uses: mozilla/sccache-action@v0.0.9
       
       - name: Setup Rust Environment
         uses: ./.github/actions/setup-rust-env
