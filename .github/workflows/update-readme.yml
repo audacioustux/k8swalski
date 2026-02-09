@@ -38,7 +38,7 @@ jobs:
           CLI_HELP: ${{ steps.help.outputs.content }}
         with:
           script: |
-            await require('./.github/scripts/replace-section.js')({
+            await require('./.github/scripts/inject-md-markers.js')({
               content: process.env.CLI_HELP,
               filePath: 'README.md',
               beginMarker: '<!-- BEGIN_CLI_HELP -->',
