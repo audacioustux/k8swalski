@@ -1,16 +1,6 @@
-# Docker Compose configuration for k8swalski
-# Use published image from GHCR or build locally
-
 services:
   k8swalski:
-    # Use pre-built image from GitHub Container Registry
     image: ghcr.io/audacioustux/k8swalski:latest
-    
-    # Or build locally (requires: mkdir -p ../artifact && cargo build --release && cp ../target/release/k8swalski ../artifact/)
-    # build:
-    #   context: ..
-    #   dockerfile: Dockerfile
-    
     container_name: k8swalski
     ports:
       - "8080:8080"
@@ -22,5 +12,3 @@ services:
       INCLUDE_ENV_VARS: false
       PROMETHEUS: true
     restart: unless-stopped
-    
-    # Healthcheck inherited from Dockerfile HEALTHCHECK directive
