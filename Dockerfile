@@ -4,21 +4,6 @@
 ARG UID=65532
 ARG GID=65532
 
-# Planner stage - analyze dependencies
-FROM chainguard/rust:latest AS planner
-
-WORKDIR /app
-
-# Install cargo-chef
-RUN cargo install cargo-chef
-
-# Copy manifests to create recipe
-COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
-COPY src ./src
-
-# Generate dependency recipe
-RUN cargo chef prepare --recipe-path recipe.json
-
 # Builder stage
 FROM chainguard/rust:latest AS builder
 
@@ -27,27 +12,26 @@ ARG GID
 
 WORKDIR /app
 
-# Install cargo-chef
-RUN cargo install cargo-chef
-
-# Copy recipe from planner
-COPY --from=planner /app/recipe.json recipe.json
-
-# Build dependencies only (cached layer)
+# Install sccache (latest version)
 RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,uid=${UID},gid=${GID},sharing=locked \
     --mount=type=cache,target=/home/nonroot/.cargo/git,uid=${UID},gid=${GID},sharing=locked \
-    --mount=type=cache,target=/app/target,uid=${UID},gid=${GID} \
-    cargo chef cook --release --recipe-path recipe.json
+    cargo install sccache --version 0.13.0 --locked
+
+# Configure sccache environment
+ENV SCCACHE_DIR=/home/nonroot/.cache/sccache \
+    SCCACHE_CACHE_SIZE=2G \
+    RUSTC_WRAPPER=/home/nonroot/.cargo/bin/sccache
 
 # Copy source code
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY src ./src
 
-# Build application with dependencies already cached
-RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,uid=${UID},gid=${GID},sharing=locked \
+# Build application with sccache
+RUN --mount=type=cache,target=/home/nonroot/.cache/sccache,uid=${UID},gid=${GID},sharing=locked \
+    --mount=type=cache,target=/home/nonroot/.cargo/registry,uid=${UID},gid=${GID},sharing=locked \
     --mount=type=cache,target=/home/nonroot/.cargo/git,uid=${UID},gid=${GID},sharing=locked \
-    --mount=type=cache,target=/app/target,uid=${UID},gid=${GID} \
     cargo build --release && \
+    sccache --show-stats && \
     cp target/release/k8swalski /tmp/k8swalski && \
     strip /tmp/k8swalski
 
