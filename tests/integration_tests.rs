@@ -33,6 +33,7 @@ fn create_test_server() -> TestServer {
             echo_back_to_client: None,
             log_without_newline: false,
             override_response_body_file_path: None,
+            check_health: false,
         }),
         hostname: "test-host".to_string(),
     };
@@ -188,6 +189,7 @@ async fn test_jwt_decoding() {
         echo_back_to_client: None,
         log_without_newline: false,
         override_response_body_file_path: None,
+        check_health: false,
     };
 
     let state = AppState { config: Arc::new(config), hostname: "test-host".to_string() };
@@ -239,6 +241,7 @@ async fn test_metrics_endpoint() {
         echo_back_to_client: None,
         log_without_newline: false,
         override_response_body_file_path: None,
+        check_health: false,
     };
 
     let state = AppState { config: Arc::new(config), hostname: "test-host".to_string() };
