@@ -1,9 +1,15 @@
 # syntax=docker/dockerfile:1
 
+ARG UID=65532
+ARG GID=65532
+
 # Builder stage
 FROM chainguard/rust:latest AS builder
 
-USER 65532:65532
+ARG UID
+ARG GID
+
+USER ${UID}:${GID}
 
 WORKDIR /app
 
@@ -12,20 +18,15 @@ COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY src ./src
 
 # Build application
-RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,sharing=locked,uid=65532,gid=65532 \
-    --mount=type=cache,target=/home/nonroot/.cargo/git,sharing=locked,uid=65532,gid=65532 \
-    <<EOF
-set -e
-
-cargo build --release
-
-# Prepare binary
-cp target/release/k8swalski /tmp/k8swalski
-strip /tmp/k8swalski
-EOF
+RUN --mount=type=cache,target=/home/nonroot/.cargo/registry,sharing=locked,uid=${UID},gid=${GID} \
+    --mount=type=cache,target=/home/nonroot/.cargo/git,sharing=locked,uid=${UID},gid=${GID} \
+    cargo build --release && strip target/release/k8swalski
 
 # Runtime stage
 FROM chainguard/wolfi-base:latest
+
+ARG UID
+ARG GID
 
 LABEL org.opencontainers.image.title="k8swalski"
 LABEL org.opencontainers.image.description="HTTP/HTTPS echo server for debugging and testing"
@@ -38,10 +39,10 @@ RUN apk add --no-cache curl
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /tmp/k8swalski /app/k8swalski
+COPY --from=builder /app/target/release/k8swalski /app/k8swalski
 
 # Run as nonroot user
-USER 65532:65532
+USER ${UID}:${GID}
 
 # Expose ports
 EXPOSE 8080 8443
