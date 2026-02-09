@@ -4,7 +4,17 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug, Clone)]
 #[command(name = "k8swalski")]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about)]
+#[command(long_about = "HTTP/HTTPS echo server for debugging and testing.
+
+Features:
+  • Dual HTTP/HTTPS support with configurable ports
+  • Request echo (headers, body, query params, IP)
+  • Response manipulation (custom status, delays, content-type)
+  • JWT decoding, Prometheus metrics support
+  • JSON or human-readable logging with path filtering
+  • CORS support with flexible configuration
+  • Multi-arch Docker images (amd64, arm64)")]
 pub struct Config {
     /// HTTP port to listen on
     #[arg(long, env = "HTTP_PORT", default_value = "8080")]
