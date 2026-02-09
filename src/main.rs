@@ -6,6 +6,20 @@ use tokio::signal;
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+fn health_check() -> Result<()> {
+    match reqwest::blocking::get("http://localhost:8080/livez") {
+        Ok(res) if res.status().is_success() => std::process::exit(0),
+        Ok(res) => {
+            eprintln!("Health check failed with status: {}", res.status());
+            std::process::exit(1)
+        },
+        Err(e) => {
+            eprintln!("Health check failed: {}", e);
+            std::process::exit(1)
+        },
+    }
+}
+
 use k8swalski::{
     build_router,
     config::{Config, LogFormat},
@@ -14,6 +28,11 @@ use k8swalski::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Handle health check flag before parsing full config
+    if std::env::args().any(|arg| arg == "--check-health") {
+        return health_check();
+    }
+
     // Parse configuration
     let config = Config::parse();
 
