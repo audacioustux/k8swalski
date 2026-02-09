@@ -65,11 +65,11 @@ See [deployment.yaml](base/deployment.yaml) for available options.
 ## Resource Limits
 
 ### Development
-- CPU: 100m request, 500m limit
-- Memory: 128Mi request, 256Mi limit
+- CPU: 50m request, 200m limit
+- Memory: 64Mi request, 128Mi limit
 - Replicas: 1
 
 ### Production
-- CPU: 200m request, 1000m limit
-- Memory: 256Mi request, 512Mi limit
+- CPU: 100m request, 300m limit
+- Memory: 128Mi request, 256Mi limit
 - Replicas: 3
