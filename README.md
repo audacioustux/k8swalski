@@ -5,6 +5,16 @@
 
 HTTP/HTTPS echo server for debugging and testing. Built with Rust (axum + tokio).
 
+## Features
+
+- **Dual HTTP/HTTPS support** with configurable ports
+- **Request echo** - headers, body, query params, IP
+- **Response manipulation** - custom status, delays, content-type
+- **JWT decoding**, Prometheus metrics support
+- **JSON or human-readable logging** with path filtering
+- **CORS support** with flexible configuration
+- **Multi-arch Docker images** (amd64, arm64)
+
 ## Quick Start
 
 ```bash
