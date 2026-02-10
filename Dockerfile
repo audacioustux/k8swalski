@@ -4,7 +4,7 @@ FROM cgr.dev/chainguard/glibc-dynamic:latest AS runtime
 
 LABEL org.opencontainers.image.title="k8swalski"
 LABEL org.opencontainers.image.description="HTTP/HTTPS echo server for debugging and testing"
-LABEL org.opencontainers.image.source="https://github.com/audacioustux/k8swalski"
+LABEL org.opencontainers.image.source="https://github.com/nobinalo/k8swalski"
 LABEL org.opencontainers.image.licenses="MIT"
 
 USER 65532:65532

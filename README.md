@@ -1,6 +1,6 @@
 # k8swalski
 
-[![Build](https://img.shields.io/github/actions/workflow/status/audacioustux/k8swalski/build-push-ghcr.yml?style=flat-square)](https://github.com/audacioustux/k8swalski/actions)
+[![Build](https://img.shields.io/github/actions/workflow/status/nobinalo/k8swalski/build-push-ghcr.yml?style=flat-square)](https://github.com/nobinalo/k8swalski/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 HTTP/HTTPS echo server for debugging and testing Kubernetes applications, webhooks, and API clients.
@@ -22,7 +22,7 @@ HTTP/HTTPS echo server for debugging and testing Kubernetes applications, webhoo
 
 ```bash
 # Pull and run
-docker run -p 8080:8080 -p 8443:8443 ghcr.io/audacioustux/k8swalski:latest
+docker run -p 8080:8080 -p 8443:8443 ghcr.io/nobinalo/k8swalski:latest
 
 # Test
 curl http://localhost:8080/test

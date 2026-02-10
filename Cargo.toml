@@ -6,7 +6,7 @@ rust-version = "1.85"
 authors = ["audacioustux <contact@audacioustux.com>"]
 license = "MIT"
 description = "HTTP/HTTPS echo server for debugging and testing"
-repository = "https://github.com/audacioustux/k8swalski"
+repository = "https://github.com/nobinalo/k8swalski"
 resolver = "2"
 
 [[bin]]

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: k8swalski
-        image: ghcr.io/audacioustux/k8swalski:latest
+        image: ghcr.io/nobinalo/k8swalski:latest
         ports:
         - name: http
           containerPort: 8080

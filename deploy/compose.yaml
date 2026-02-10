@@ -1,6 +1,6 @@
 services:
   k8swalski:
-    image: ghcr.io/audacioustux/k8swalski:latest
+    image: ghcr.io/nobinalo/k8swalski:latest
     container_name: k8swalski
     ports:
       - "8080:8080"
