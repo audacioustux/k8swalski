@@ -49,10 +49,10 @@ jobs:
         include:
           - arch: amd64
             target: x86_64-unknown-linux-gnu
-            runner: [self-hosted, amd64]
+            runner: arc-runners-nobinalo-amd64
           - arch: arm64
             target: aarch64-unknown-linux-gnu
-            runner: [self-hosted, arm64]
+            runner: arc-runners-nobinalo-arm64
 
     steps:
       - uses: actions/checkout@v6
