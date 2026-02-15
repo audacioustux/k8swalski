@@ -1,9 +1,13 @@
-name: 'Setup Rust Environment'
-description: 'Sets up Nix-based Rust environment with caching'
+name: 'Setup Nix Environment'
+description: 'Sets up Nix environment'
 
 runs:
   using: "composite"
   steps:
+    - name: Install xz-utils
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y xz-utils
+
     - name: Install Nix with Determinate Systems installer
       uses: DeterminateSystems/nix-installer-action@v20
       with:

@@ -18,8 +18,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup Rust Environment
-        uses: ./.github/actions/setup-rust-env
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
       
       - name: Generate CLI help
         id: help
