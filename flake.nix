@@ -36,10 +36,6 @@
             "rust-analyzer"
             "clippy"
           ];
-          targets = [
-            "x86_64-unknown-linux-gnu"
-            "aarch64-unknown-linux-gnu"
-          ];
         };
 
         pre-commit-check = pre-commit-hooks.lib.${system}.run {
@@ -56,46 +52,48 @@
             nixfmt.enable = true;
           };
         };
-
-        devPackages = with pkgs; [
-          # Rust toolchain
-          rustToolchain
-
-          # Build dependencies
-          pkg-config
-          openssl
-
-          # Development tools
-          cargo-watch
-          cargo-nextest
-          sccache
-          cargo-cross
-
-          # Task runner
-          go-task
-
-          # Shell tools
-          direnv
-          git
-
-          # Nix tooling
-          nixfmt
-        ];
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = devPackages;
+          buildInputs = with pkgs; [
+            # Rust toolchain
+            rustToolchain
+
+            # Build dependencies
+            pkg-config
+            openssl
+
+            # Development tools
+            cargo-watch
+            cargo-nextest
+            sccache
+            cargo-cross
+
+            # Task runner
+            go-task
+
+            # Shell tools
+            direnv
+            git
+
+            # Nix tooling
+            nixfmt
+          ];
 
           shellHook = ''
             ${pre-commit-check.shellHook}
             export RUSTC_WRAPPER=sccache
-            echo "k8swalski dev environment loaded"
-            echo "Run 'task --list' to see available tasks"
           '';
 
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
         };
+
+        checks = {
+          pre-commit = pre-commit-check;
+        };
+      }
+    );
 
 
 
