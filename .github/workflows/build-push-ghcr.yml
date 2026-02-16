@@ -66,12 +66,7 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build binary
-        run: |
-          if [ "${{ matrix.arch }}" = "arm64" ]; then
-            nix develop .#ci-cross-aarch64 --command task ci:build TARGET=${{ matrix.target }}
-          else
-            nix develop .#ci --command task ci:build TARGET=${{ matrix.target }}
-          fi
+        run: nix develop .#ci --command task ci:build TARGET=${{ matrix.target }}
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v6

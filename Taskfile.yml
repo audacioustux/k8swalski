@@ -54,7 +54,7 @@ tasks:
 
   ci:build:
     desc: "Build release binary for target"
-    cmd: cargo build --release --target {{.TARGET}}
+    cmd: cross build --release --target {{.TARGET}}
 
   # Test tasks
   test:watch:
