@@ -145,6 +145,9 @@
               export OPENSSL_DIR="${pkgsCross.openssl.dev}"
               export OPENSSL_LIB_DIR="${pkgsCross.openssl.out}/lib"
               export OPENSSL_INCLUDE_DIR="${pkgsCross.openssl.dev}/include"
+              
+              # Explicitly set the linker for the target
+              export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="${pkgsCross.stdenv.cc.targetPrefix}cc"
             '';
 
             RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
