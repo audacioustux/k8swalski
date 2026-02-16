@@ -114,6 +114,42 @@
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
         };
 
+        devShells.ci-cross-aarch64 =
+          let
+            pkgsCross = import nixpkgs {
+              inherit system overlays;
+              crossSystem = {
+                config = "aarch64-unknown-linux-gnu";
+              };
+            };
+          in
+          pkgsCross.mkShell {
+            # Native build inputs (run on build machine)
+            nativeBuildInputs = with pkgs; [
+              rustToolchain
+              pkg-config
+              cargo-nextest
+              sccache
+              go-task
+            ];
+
+            # Build inputs (run on target machine)
+            buildInputs = with pkgsCross; [
+              openssl
+            ];
+
+            shellHook = ''
+              export RUSTC_WRAPPER=sccache
+              # Point to cross-compiled OpenSSL
+              export PKG_CONFIG_PATH="${pkgsCross.openssl.dev}/lib/pkgconfig"
+              export OPENSSL_DIR="${pkgsCross.openssl.dev}"
+              export OPENSSL_LIB_DIR="${pkgsCross.openssl.out}/lib"
+              export OPENSSL_INCLUDE_DIR="${pkgsCross.openssl.dev}/include"
+            '';
+
+            RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
+          };
+
         checks = {
           pre-commit = pre-commit-check;
         };
