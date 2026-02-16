@@ -67,12 +67,27 @@ async fn main() -> Result<()> {
     // Generate certificates if they don't exist
     generate_certs_if_missing(&config.tls_cert_path, &config.tls_key_path).await?;
 
+    // Create handle for HTTPS shutdown
+    let handle = axum_server::Handle::new();
+
+    // Spawn task to wait for shutdown signal and trigger HTTPS graceful shutdown
+    tokio::spawn({
+        let handle = handle.clone();
+        async move {
+            shutdown_signal().await;
+            info!("Signal received, shutting down HTTPS server...");
+            handle.graceful_shutdown(None);
+        }
+    });
+
     // Spawn HTTPS server
     let https_handle = {
         let port = config.https_port;
         let cert_path = config.tls_cert_path.clone();
         let key_path = config.tls_key_path.clone();
-        tokio::spawn(async move { run_https_server(port, &cert_path, &key_path, state).await })
+        tokio::spawn(
+            async move { run_https_server(port, &cert_path, &key_path, state, handle).await },
+        )
     };
 
     // Wait for servers to complete (they handle shutdown internally)
@@ -166,6 +181,7 @@ async fn run_https_server(
     cert_path: &Path,
     key_path: &Path,
     state: AppState,
+    handle: axum_server::Handle<SocketAddr>,
 ) -> Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("HTTPS server listening on {}", addr);
@@ -176,6 +192,7 @@ async fn run_https_server(
         .context("Failed to load TLS configuration")?;
 
     axum_server::bind_rustls(addr, tls_config)
+        .handle(handle)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .context("HTTPS server error")?;
