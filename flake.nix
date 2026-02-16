@@ -97,24 +97,7 @@
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
         };
 
-        devShells.ci = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            rustToolchain
-            pkg-config
-            openssl
-            cargo-nextest
-            sccache
-            go-task
-            cargo-cross
-          ];
 
-          shellHook = ''
-            export RUSTC_WRAPPER=sccache
-          '';
-
-          RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-        };
 
         checks = {
           pre-commit = pre-commit-check;

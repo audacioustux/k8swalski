@@ -18,19 +18,15 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
-      
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Generate CLI help
         id: help
         run: |
-          nix develop --quiet --command bash -c '
-            {
-              echo "content<<CLI_HELP_EOF"
-              cargo run --quiet -- --help
-              echo "CLI_HELP_EOF"
-            } >> $GITHUB_OUTPUT
-          '
+          echo "content<<CLI_HELP_EOF" >> $GITHUB_OUTPUT
+          cargo run --quiet -- --help >> $GITHUB_OUTPUT
+          echo "CLI_HELP_EOF" >> $GITHUB_OUTPUT
       
       - name: Update README
         uses: actions/github-script@v7
