@@ -59,10 +59,6 @@
             # Rust toolchain
             rustToolchain
 
-            # Build dependencies
-            pkg-config
-            openssl
-
             # Development tools
             cargo-watch
             cargo-nextest
@@ -86,7 +82,6 @@
           '';
 
           RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
         };
 
         checks = {
@@ -94,7 +89,5 @@
         };
       }
     );
-
-
 
 }
