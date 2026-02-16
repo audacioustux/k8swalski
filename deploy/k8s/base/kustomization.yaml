@@ -8,5 +8,3 @@ resources:
 commonLabels:
   app.kubernetes.io/name: k8swalski
   app.kubernetes.io/version: latest
-
-namespace: default
