@@ -4,8 +4,6 @@ kind: Kustomization
 bases:
 - ../../base
 
-namespace: k8swalski-dev
-
 replicas:
 - name: k8swalski
   count: 1
