@@ -53,14 +53,8 @@ tasks:
     cmd: cargo nextest run --all-features
 
   ci:build:
-    desc: "Build release binary for target (Native)"
+    desc: "Build release binary for target"
     cmd: cargo build --release --target {{.TARGET}}
-
-  ci:cross-build:
-    desc: "Build release binary for target (Cross)"
-    # Unset RUSTUP_TOOLCHAIN to avoid cross trying to install the nix store path as a toolchain
-    # Set CROSS_TOOLCHAIN=stable to force using the container's toolchain
-    cmd: unset RUSTUP_TOOLCHAIN && CROSS_TOOLCHAIN=stable cross build --release --target {{.TARGET}}
 
   # Test tasks
   test:watch:
