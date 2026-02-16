@@ -68,7 +68,6 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install cross
-        if: matrix.arch == 'arm64'
         uses: taiki-e/install-action@cross
 
       - name: Setup Rust cache
@@ -77,12 +76,7 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build binary
-        run: |
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            cargo build --release --target ${{ matrix.target }}
-          else
-            cross build --release --target ${{ matrix.target }}
-          fi
+        run: cross build --release --target ${{ matrix.target }}
 
       - name: Prepare binary for Docker
         run: |
