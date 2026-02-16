@@ -97,9 +97,4 @@
 
 
 
-        checks = {
-          pre-commit = pre-commit-check;
-        };
-      }
-    );
 }
