@@ -59,7 +59,8 @@ tasks:
   ci:cross-build:
     desc: "Build release binary for target (Cross)"
     # Unset RUSTUP_TOOLCHAIN to avoid cross trying to install the nix store path as a toolchain
-    cmd: unset RUSTUP_TOOLCHAIN && cross build --release --target {{.TARGET}}
+    # Set CROSS_TOOLCHAIN=stable to force using the container's toolchain
+    cmd: unset RUSTUP_TOOLCHAIN && CROSS_TOOLCHAIN=stable cross build --release --target {{.TARGET}}
 
   # Test tasks
   test:watch:
