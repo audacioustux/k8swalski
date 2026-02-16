@@ -27,17 +27,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
 
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run checks
-        run: nix develop .#ci --command task ci:check ci:clippy ci:fmt
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
 
-      - name: Run tests
-        run: nix develop .#ci --command task ci:test
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Tests
+        run: cargo test --all
 
   build-and-push:
     name: Build & Push ${{ matrix.arch }}
@@ -63,6 +68,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install cross
+        if: matrix.arch == 'arm64'
         uses: taiki-e/install-action@cross
 
       - name: Setup Rust cache
@@ -71,7 +77,12 @@ jobs:
           key: ${{ matrix.target }}
 
       - name: Build binary
-        run: cross build --release --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            cargo build --release --target ${{ matrix.target }}
+          else
+            cross build --release --target ${{ matrix.target }}
+          fi
 
       - name: Prepare binary for Docker
         run: |
