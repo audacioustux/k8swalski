@@ -1,6 +1,4 @@
 {
-  description = "k8swalski - HTTP/HTTPS echo server for debugging and testing";
-
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -45,7 +43,10 @@
             rustfmt.enable = true;
             clippy = {
               enable = true;
-              entry = pkgs.lib.mkForce "cargo clippy --all-features -- -D warnings";
+              settings = {
+                allFeatures = true;
+                denyWarnings = true;
+              };
             };
 
             # Nix hooks
@@ -62,7 +63,6 @@
             # Development tools
             cargo-watch
             cargo-nextest
-            sccache
             cargo-cross
 
             # Task runner
@@ -78,10 +78,7 @@
 
           shellHook = ''
             ${pre-commit-check.shellHook}
-            export RUSTC_WRAPPER=sccache
           '';
-
-          RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
         };
 
         checks = {
