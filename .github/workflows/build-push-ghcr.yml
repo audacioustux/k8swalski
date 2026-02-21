@@ -67,26 +67,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: mlugg/setup-zig@v1
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild,upx
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}-${{ matrix.bin }}
 
-      - name: Install ARM Linker
-        if: matrix.arch == 'arm64'
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
-        
       - name: Build
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: ${{ matrix.linker }}
         run: |
-          rustup target add ${{ matrix.target }}
-          cargo build --release --target ${{ matrix.target }} -p ${{ matrix.bin }}
-
-      - name: Compress
-        uses: taiki-e/install-action@v2
-        with:
-          tool: upx
-      - run: upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.bin }}
+          cargo zigbuild --release --target ${{ matrix.target }} -p ${{ matrix.bin }}
+          upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.bin }}
 
       - uses: actions/upload-artifact@v4
         with:
