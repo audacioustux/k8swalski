@@ -65,10 +65,11 @@ jobs:
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: imjasonh/setup-crane@v0.3
 
-      - name: Install cross + upx
+      - name: Install cross
+        if: matrix.use_cross
         uses: taiki-e/install-action@v2
         with:
-          tool: ${{ matrix.use_cross && 'cross,' || '' }}upx
+          tool: cross
 
       - name: Add musl target (native only)
         if: "!matrix.use_cross"
@@ -87,8 +88,6 @@ jobs:
           BIN: ${{ matrix.bin }}
         run: $BUILDER build --release --target $TARGET -p $BIN
 
-      - name: Compress (UPX)
-        run: upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.bin }}
 
       - name: Login to registry
         env:
