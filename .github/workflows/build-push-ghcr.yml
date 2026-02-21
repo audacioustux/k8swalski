@@ -168,5 +168,5 @@ jobs:
         run: |
           while IFS= read -r tag; do
             [ -z "$tag" ] && continue
-            crane index append --tag "$tag" "${tag}-amd64" "${tag}-arm64"
+            crane index append -m "${tag}-amd64" -m "${tag}-arm64" -t "$tag"
           done <<< "$TAGS"
