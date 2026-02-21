@@ -70,10 +70,10 @@ jobs:
         with:
           tool: cross
 
-      # - name: Add musl target (native only)
-      #   if: "!matrix.use_cross"
-      #   run: |
-      #     rustup target add ${{ matrix.target }}
+      - name: Add musl target (native only)
+        if: "!matrix.use_cross"
+        run: |
+          rustup target add ${{ matrix.target }}
       #     sudo apt-get install -y musl-tools
 
       - uses: Swatinem/rust-cache@v2.8.1
