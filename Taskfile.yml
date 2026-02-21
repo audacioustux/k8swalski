@@ -52,8 +52,6 @@ tasks:
     desc: "Run tests"
     cmd: cargo nextest run --all-features
 
-
-
   # Test tasks
   test:watch:
     desc: "Watch and run tests on changes"
