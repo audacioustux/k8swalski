@@ -1,0 +1,50 @@
+name: 'Crane Multi-Arch Publish'
+description: 'Pushes binaries as a multi-arch OCI image without temporary tags'
+inputs:
+  bin:
+    description: 'Name of the binary'
+    required: true
+  arches:
+    description: 'JSON array of architectures'
+    required: true
+  tags:
+    description: 'Newline separated list of tags'
+    required: true
+  registry:
+    description: 'Target registry'
+    required: true
+  image_name:
+    description: 'Full image name (owner/repo/bin)'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Push and Manifest
+      shell: bash
+      run: |
+        REFS=""
+        DEST="${{ inputs.registry }}/${{ inputs.image_name }}"
+
+        for arch in $(echo '${{ inputs.arches }}' | jq -r '.[]'); do
+          DIR="${{ inputs.bin }}-$arch"
+          [ ! -f "$DIR/${{ inputs.bin }}" ] && echo "::error::Missing $DIR/${{ inputs.bin }}" && exit 1
+
+          # Push to a digest and capture it
+          # We use a temporary tag strictly for the 'append' operation, 
+          # but we don't keep it.
+          DIGEST=$(tar -C "$DIR" -c "${{ inputs.bin }}" | crane append -f - -t "$DEST" --output digest)
+          
+          # Mutate the digest to set Entrypoint/Platform
+          FINAL_DIGEST=$(crane mutate "$DEST@$DIGEST" \
+            --entrypoint "/${{ inputs.bin }}" \
+            --platform "linux/$arch" \
+            --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}")
+          
+          REFS="$REFS -m $FINAL_DIGEST"
+        done
+
+        # Apply all tags to the multi-arch index
+        while IFS= read -r tag; do
+          [ -n "$tag" ] && crane index append $REFS -t "$tag"
+        done <<< "${{ inputs.tags }}"
