@@ -1,5 +1,6 @@
 name: Build and Push
 
+# ─── Triggers ────────────────────────────────────────────────────────────────
 on:
   push:
     branches: [main]
@@ -7,36 +8,49 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# ─── Concurrency ─────────────────────────────────────────────────────────────
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ─── Permissions ─────────────────────────────────────────────────────────────
 permissions:
   contents: read
   packages: write
 
+# ─── Global Environment ──────────────────────────────────────────────────────
 env:
   REGISTRY: ghcr.io
   RUSTC_WRAPPER: sccache
   SCCACHE_GHA_ENABLED: "true"
 
+# ─── Jobs ────────────────────────────────────────────────────────────────────
 jobs:
+
+  # Determines which binaries exist in the workspace and which architectures to target
   plan:
     name: Plan Workspace
     runs-on: ubuntu-latest
     outputs:
-      bins: ${{ steps.bins.outputs.bins }}
+      bins:   ${{ steps.bins.outputs.bins }}
       arches: ${{ steps.arches.outputs.arches }}
     steps:
       - uses: actions/checkout@v4
-      - id: bins
+
+      - name: Discover binaries
+        id: bins
         run: |
           QUERY='.packages[].targets[] | select(.kind[] == "bin") | .name'
           BINS=$(cargo metadata --no-deps --format-version 1 | jq -c "[$QUERY]")
           echo "bins=$BINS" >> $GITHUB_OUTPUT
-      - id: arches
+
+      - name: Set target architectures
+        id: arches
         run: echo 'arches=["amd64","arm64"]' >> $GITHUB_OUTPUT
 
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # Runs tests and linting — must pass before any image is published
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -44,12 +58,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
+
+      - name: Install nextest
+        uses: taiki-e/install-action@v2
         with:
           tool: nextest
-      - run: cargo nextest run --all
-      - run: cargo clippy --all -- -D warnings
 
+      - name: Run tests
+        run: cargo nextest run --all
+
+      - name: Run clippy
+        run: cargo clippy --all -- -D warnings
+
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # Cross-compiles each binary for each architecture and uploads the result as an artifact
   build:
     name: Build ${{ matrix.bin }} (${{ matrix.arch }})
     needs: [plan]
@@ -57,8 +80,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bin: ${{ fromJson(needs.plan.outputs.bins) }}
-        arch: ${{ fromJson(needs.plan.outputs.arches) }}
+        bin:   ${{ fromJson(needs.plan.outputs.bins) }}
+        arch:  ${{ fromJson(needs.plan.outputs.arches) }}
         include:
           - arch: amd64
             target: x86_64-unknown-linux-musl
@@ -68,29 +91,37 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: mlugg/setup-zig@v2
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-zigbuild
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}-${{ matrix.bin }}
 
-      - name: Build
-        run: |
-          cargo zigbuild --release --target ${{ matrix.target }} -p ${{ matrix.bin }}
+      - name: Install cargo-zigbuild
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
 
-      - name: Compress Binary
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build binary
+        run: cargo zigbuild --release --target ${{ matrix.target }} -p ${{ matrix.bin }}
+
+      - name: Compress binary (UPX)
         uses: crazy-max/ghaction-upx@v3
         with:
           file: target/${{ matrix.target }}/release/${{ matrix.bin }}
           args: --best --lzma
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.bin }}-${{ matrix.arch }}
           path: target/${{ matrix.target }}/release/${{ matrix.bin }}
           if-no-files-found: error
 
+  # ───────────────────────────────────────────────────────────────────────────
+
+  # Assembles artifacts into a multi-arch Docker image and pushes to GHCR
   publish:
     name: Publish ${{ matrix.bin }}
     needs: [plan, test, build]
@@ -99,7 +130,7 @@ jobs:
       matrix:
         bin: ${{ fromJson(needs.plan.outputs.bins) }}
     steps:
-      - name: Download Binaries
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: ${{ matrix.bin }}-*
@@ -108,14 +139,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GHCR
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute Metadata
+      - name: Compute image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -124,13 +155,13 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and Push
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
+          tags:   ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           file: |
             FROM scratch
