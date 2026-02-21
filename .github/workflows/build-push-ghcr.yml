@@ -109,7 +109,8 @@ jobs:
       - name: Compress binary (UPX)
         uses: crazy-max/ghaction-upx@v3
         with:
-          file: target/${{ matrix.target }}/release/${{ matrix.bin }}
+          files: |
+            target/${{ matrix.target }}/release/${{ matrix.bin }}
           args: --best --lzma
 
       - name: Upload artifact

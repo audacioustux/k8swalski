@@ -6,6 +6,10 @@ on:
     paths: ['src/config.rs', 'src/main.rs', 'Cargo.toml']
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
