@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: mozilla-actions/sccache-action@v0.0.9
-      - uses: mlugg/setup-zig@v1
+      - uses: mlugg/setup-zig@v2
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-zigbuild,upx
