@@ -70,7 +70,7 @@ jobs:
       - uses: mlugg/setup-zig@v2
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-zigbuild,upx
+          tool: cargo-zigbuild
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}-${{ matrix.bin }}
@@ -78,7 +78,12 @@ jobs:
       - name: Build
         run: |
           cargo zigbuild --release --target ${{ matrix.target }} -p ${{ matrix.bin }}
-          upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.bin }}
+
+      - name: Compress Binary
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          file: target/${{ matrix.target }}/release/${{ matrix.bin }}
+          args: --best --lzma
 
       - uses: actions/upload-artifact@v4
         with:
