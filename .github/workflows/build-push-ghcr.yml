@@ -74,7 +74,7 @@ jobs:
         if: "!matrix.use_cross"
         run: |
           rustup target add ${{ matrix.target }}
-      #     sudo apt-get install -y musl-tools
+          sudo apt-get install -y musl-tools
 
       # - uses: Swatinem/rust-cache@v2.8.1
       #   with:
