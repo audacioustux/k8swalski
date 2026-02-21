@@ -1,25 +1,20 @@
 name: Build and Push
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
   packages: write
-
 env:
   REGISTRY: ghcr.io
   RUSTC_WRAPPER: sccache
   SCCACHE_GHA_ENABLED: "true"
-
 jobs:
   plan:
     name: Plan Workspace
@@ -29,16 +24,13 @@ jobs:
       arches: ${{ steps.arches.outputs.arches }}
     steps:
       - uses: actions/checkout@v6
-
       - id: bins
         run: |
           QUERY='.packages[].targets[] | select(.kind[] == "bin") | .name'
           BINS=$(cargo metadata --no-deps --format-version 1 | jq -c "[$QUERY]")
           echo "bins=$BINS" >> $GITHUB_OUTPUT
-
       - id: arches
         run: echo 'arches=["amd64","arm64"]' >> $GITHUB_OUTPUT
-
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -51,7 +43,6 @@ jobs:
           tool: nextest
       - run: cargo nextest run --all
       - run: cargo clippy --all -- -D warnings
-
   build:
     name: Build ${{ matrix.bin }} (${{ matrix.arch }})
     needs: [plan]
@@ -69,24 +60,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: mlugg/setup-zig@v2
       - uses: taiki-e/install-action@v2
         with:
-          tool: cross
+          tool: cargo-zigbuild
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}-${{ matrix.bin }}
-
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
       - name: Build
         env:
           TARGET: ${{ matrix.target }}
           BIN: ${{ matrix.bin }}
-        run: cross build --release --target $TARGET -p $BIN
-
+        run: cargo zigbuild --release --target $TARGET -p $BIN
       - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.bin }}-${{ matrix.arch }}
           path: target/${{ matrix.target }}/release/${{ matrix.bin }}
-
   publish:
     name: Publish ${{ matrix.bin }}
     needs: [plan, test, build]
@@ -97,16 +88,13 @@ jobs:
         bin: ${{ fromJson(needs.plan.outputs.bins) }}
     steps:
       - uses: imjasonh/setup-crane@v0.5
-
       - uses: actions/download-artifact@v7
         with:
           pattern: ${{ matrix.bin }}-*
-
       - name: Login to registry
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$TOKEN" | crane auth login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-
       - name: Compute tags
         id: meta
         uses: docker/metadata-action@v5
@@ -115,7 +103,6 @@ jobs:
           tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
-
       - name: Push images and create manifest
         env:
           BIN: ${{ matrix.bin }}
@@ -133,3 +120,139 @@ jobs:
             done
             crane index append $REFS -t "$tag"
           done <<< "$TAGS"
+
+# name: Build and Push
+
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+#   workflow_dispatch:
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
+
+# permissions:
+#   contents: read
+#   packages: write
+
+# env:
+#   REGISTRY: ghcr.io
+#   RUSTC_WRAPPER: sccache
+#   SCCACHE_GHA_ENABLED: "true"
+
+# jobs:
+#   plan:
+#     name: Plan Workspace
+#     runs-on: ubuntu-latest
+#     outputs:
+#       bins: ${{ steps.bins.outputs.bins }}
+#       arches: ${{ steps.arches.outputs.arches }}
+#     steps:
+#       - uses: actions/checkout@v6
+
+#       - id: bins
+#         run: |
+#           QUERY='.packages[].targets[] | select(.kind[] == "bin") | .name'
+#           BINS=$(cargo metadata --no-deps --format-version 1 | jq -c "[$QUERY]")
+#           echo "bins=$BINS" >> $GITHUB_OUTPUT
+
+#       - id: arches
+#         run: echo 'arches=["amd64","arm64"]' >> $GITHUB_OUTPUT
+
+#   test:
+#     name: Test
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v6
+#       - uses: mozilla-actions/sccache-action@v0.0.9
+#       - uses: Swatinem/rust-cache@v2
+#       - uses: taiki-e/install-action@v2
+#         with:
+#           tool: nextest
+#       - run: cargo nextest run --all
+#       - run: cargo clippy --all -- -D warnings
+
+#   build:
+#     name: Build ${{ matrix.bin }} (${{ matrix.arch }})
+#     needs: [plan]
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         bin: ${{ fromJson(needs.plan.outputs.bins) }}
+#         arch: ${{ fromJson(needs.plan.outputs.arches) }}
+#         include:
+#           - arch: amd64
+#             target: x86_64-unknown-linux-musl
+#           - arch: arm64
+#             target: aarch64-unknown-linux-musl
+#     steps:
+#       - uses: actions/checkout@v6
+#       - uses: mozilla-actions/sccache-action@v0.0.9
+#       - uses: taiki-e/install-action@v2
+#         with:
+#           tool: cross
+#       - uses: Swatinem/rust-cache@v2
+#         with:
+#           key: ${{ matrix.target }}-${{ matrix.bin }}
+
+#       - name: Build
+#         env:
+#           TARGET: ${{ matrix.target }}
+#           BIN: ${{ matrix.bin }}
+#         run: cross build --release --target $TARGET -p $BIN
+
+#       - uses: actions/upload-artifact@v6
+#         with:
+#           name: ${{ matrix.bin }}-${{ matrix.arch }}
+#           path: target/${{ matrix.target }}/release/${{ matrix.bin }}
+
+#   publish:
+#     name: Publish ${{ matrix.bin }}
+#     needs: [plan, test, build]
+#     runs-on: ubuntu-latest
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         bin: ${{ fromJson(needs.plan.outputs.bins) }}
+#     steps:
+#       - uses: imjasonh/setup-crane@v0.5
+
+#       - uses: actions/download-artifact@v7
+#         with:
+#           pattern: ${{ matrix.bin }}-*
+
+#       - name: Login to registry
+#         env:
+#           TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         run: echo "$TOKEN" | crane auth login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+#       - name: Compute tags
+#         id: meta
+#         uses: docker/metadata-action@v5
+#         with:
+#           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.bin }}
+#           tags: |
+#             type=sha,prefix={{branch}}-
+#             type=raw,value=latest,enable={{is_default_branch}}
+
+#       - name: Push images and create manifest
+#         env:
+#           BIN: ${{ matrix.bin }}
+#           TAGS: ${{ steps.meta.outputs.tags }}
+#           ARCHES: ${{ needs.plan.outputs.arches }}
+#         run: |
+#           while IFS= read -r tag; do
+#             [ -z "$tag" ] && continue
+#             REFS=""
+#             for arch in $(echo "$ARCHES" | jq -r '.[]'); do
+#               ARCH_TAG="${tag}-${arch}"
+#               tar -C "$BIN-${arch}" -c "$BIN" | crane append -f - -t "$ARCH_TAG"
+#               crane mutate "$ARCH_TAG" --entrypoint "/$BIN"
+#               REFS="$REFS -m $ARCH_TAG"
+#             done
+#             crane index append $REFS -t "$tag"
+#           done <<< "$TAGS"
