@@ -28,7 +28,7 @@ jobs:
     outputs:
       bins: ${{ steps.list-bins.outputs.bins }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: list-bins
         run: |
           QUERY='.packages[].targets[] | select(.kind[] == "bin") | .name'
@@ -39,14 +39,14 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: mozilla-actions/sccache-action@v0.0.9
-      - uses: Swatinem/rust-cache@v2.8.1
+      - uses: Swatinem/rust-cache@v2
       - run: cargo test --all
 
-  build-and-push:
-    name: Build & Push ${{ matrix.bin }} (${{ matrix.arch }})
-    needs: [plan, test]
+  build:
+    name: Build ${{ matrix.bin }} (${{ matrix.arch }})
+    needs: [plan]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -63,7 +63,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: mozilla-actions/sccache-action@v0.0.9
-      - uses: imjasonh/setup-crane@v0.3
 
       - name: Install cross
         if: matrix.use_cross
@@ -88,6 +87,28 @@ jobs:
           BIN: ${{ matrix.bin }}
         run: $BUILDER build --release --target $TARGET -p $BIN
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.bin }}-${{ matrix.arch }}
+          path: target/${{ matrix.target }}/release/${{ matrix.bin }}
+
+  push:
+    name: Push ${{ matrix.bin }} (${{ matrix.arch }})
+    needs: [plan, test, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bin: ${{ fromJson(needs.plan.outputs.bins) }}
+        arch: [amd64, arm64]
+    steps:
+      - uses: imjasonh/setup-crane@v0.5
+
+      - name: Download artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ matrix.bin }}-${{ matrix.arch }}
 
       - name: Login to registry
         env:
@@ -106,11 +127,10 @@ jobs:
       - name: Push OCI image
         env:
           BIN: ${{ matrix.bin }}
-          TARGET: ${{ matrix.target }}
           TAGS: ${{ steps.meta.outputs.tags }}
           SOURCE: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          tar -C "target/$TARGET/release" -cf layer.tar "$BIN"
+          tar -cf layer.tar "$BIN"
           LABEL="org.opencontainers.image.source=$SOURCE"
           while IFS= read -r tag; do
             [ -z "$tag" ] && continue
@@ -120,7 +140,7 @@ jobs:
 
   manifest:
     name: Manifest ${{ matrix.bin }}
-    needs: [plan, build-and-push]
+    needs: [plan, push]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -148,5 +168,5 @@ jobs:
         run: |
           while IFS= read -r tag; do
             [ -z "$tag" ] && continue
-            crane index optimize -t "$tag" "${tag}-amd64" "${tag}-arm64"
+            crane index append --tag "$tag" "${tag}-amd64" "${tag}-arm64"
           done <<< "$TAGS"

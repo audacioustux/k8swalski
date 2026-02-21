@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.85"
 authors = ["audacioustux <contact@audacioustux.com>"]
 license = "MIT"
-description = "HTTP/HTTPS echo server for debugging and testing"
+description = "HTTP/HTTPS echo server for debugging and testing Kubernetes applications, webhooks, and API clients."
 repository = "https://github.com/nobinalo/k8swalski"
 resolver = "2"
 
