@@ -18,30 +18,18 @@ runs:
     - name: Push and Manifest
       shell: bash
       run: |
-        REFS=""
-        DEST="${{ inputs.registry }}/${{ inputs.image_name }}"
-
-        for arch in $(echo '${{ inputs.arches }}' | jq -r '.[]'); do
-          DIR="${{ inputs.bin }}-$arch"
-          [ ! -f "$DIR/${{ inputs.bin }}" ] && echo "::error::Missing $DIR/${{ inputs.bin }}" && exit 1
-
-          DIGEST=$(tar -C "$DIR" -c "${{ inputs.bin }}" | crane append -f -)
-          
-          FLAGS=(
-            "$DIGEST"
-            --entrypoint "/${{ inputs.bin }}"
-            --platform "linux/$arch"
-            --user "65532:65532"
-            --label "org.opencontainers.image.title=${{ inputs.bin }}"
-            --label "org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}"
-            --label "org.opencontainers.image.revision=${{ github.sha }}"
-          )
-
-          FINAL_DIGEST=$(crane mutate "${FLAGS[@]}")
-          REFS="$REFS -m $FINAL_DIGEST"
-        done
-
-        # 4. Create Multi-Arch Index
+        readarray -t arch_list < <(echo "$ARCHES" | jq -r '.[]')
         while IFS= read -r tag; do
-          [ -n "$tag" ] && crane index append $REFS -t "$tag"
-        done <<< "${{ inputs.tags }}"
+          [ -z "$tag" ] && continue
+
+          REFS=""
+          for arch in "${arch_list[@]}"; do
+            ARCH_TAG="${tag}-${arch}"
+            tar -C "$BIN-${arch}" -c "$BIN" | crane append -f - -t "$ARCH_TAG"
+            crane mutate "$ARCH_TAG" --entrypoint "/$BIN" --platform "linux/$arch"
+
+            REFS="$REFS -m $ARCH_TAG"
+          done
+
+          crane index append $REFS -t "$tag"
+        done <<< "$TAGS"
