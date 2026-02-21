@@ -17,7 +17,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
   RUSTC_WRAPPER: sccache
   SCCACHE_GHA_ENABLED: "true"
 
@@ -26,14 +25,19 @@ jobs:
     name: Plan Workspace
     runs-on: ubuntu-latest
     outputs:
-      bins: ${{ steps.list-bins.outputs.bins }}
+      bins: ${{ steps.bins.outputs.bins }}
+      arches: ${{ steps.arches.outputs.arches }}
     steps:
       - uses: actions/checkout@v6
-      - id: list-bins
+
+      - id: bins
         run: |
           QUERY='.packages[].targets[] | select(.kind[] == "bin") | .name'
           BINS=$(cargo metadata --no-deps --format-version 1 | jq -c "[$QUERY]")
           echo "bins=$BINS" >> $GITHUB_OUTPUT
+
+      - id: arches
+        run: echo 'arches=["amd64","arm64"]' >> $GITHUB_OUTPUT
 
   test:
     name: Test
@@ -52,63 +56,48 @@ jobs:
       fail-fast: false
       matrix:
         bin: ${{ fromJson(needs.plan.outputs.bins) }}
-        arch: [amd64, arm64]
+        arch: ${{ fromJson(needs.plan.outputs.arches) }}
         include:
           - arch: amd64
             target: x86_64-unknown-linux-musl
-            use_cross: false
           - arch: arm64
             target: aarch64-unknown-linux-musl
-            use_cross: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Install cross
-        if: matrix.use_cross
-        uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2
         with:
           tool: cross
-
-      - name: Add musl target (native only)
-        if: "!matrix.use_cross"
-        run: |
-          rustup target add ${{ matrix.target }}
-          sudo apt-get install -y musl-tools
-
-      - uses: Swatinem/rust-cache@v2.8.1
+      - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}-${{ matrix.bin }}
 
       - name: Build
         env:
-          BUILDER: ${{ matrix.use_cross && 'cross' || 'cargo' }}
           TARGET: ${{ matrix.target }}
           BIN: ${{ matrix.bin }}
-        run: $BUILDER build --release --target $TARGET -p $BIN
+        run: cross build --release --target $TARGET -p $BIN
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.bin }}-${{ matrix.arch }}
           path: target/${{ matrix.target }}/release/${{ matrix.bin }}
 
-  push:
-    name: Push ${{ matrix.bin }} (${{ matrix.arch }})
+  publish:
+    name: Publish ${{ matrix.bin }}
     needs: [plan, test, build]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         bin: ${{ fromJson(needs.plan.outputs.bins) }}
-        arch: [amd64, arm64]
     steps:
       - uses: imjasonh/setup-crane@v0.5
 
-      - name: Download artifact
-        uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v7
         with:
-          name: ${{ matrix.bin }}-${{ matrix.arch }}
+          pattern: ${{ matrix.bin }}-*
+          merge-multiple: false
 
       - name: Login to registry
         env:
@@ -119,54 +108,25 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.bin }}
-          tags: |
-            type=sha,prefix={{branch}}-,suffix=-${{ matrix.arch }}
-            type=raw,value=latest-${{ matrix.arch }},enable={{is_default_branch}}
-
-      - name: Push OCI image
-        env:
-          BIN: ${{ matrix.bin }}
-          TAGS: ${{ steps.meta.outputs.tags }}
-          SOURCE: ${{ github.server_url }}/${{ github.repository }}
-        run: |
-          tar -cf layer.tar "$BIN"
-          LABEL="org.opencontainers.image.source=$SOURCE"
-          while IFS= read -r tag; do
-            [ -z "$tag" ] && continue
-            crane append -f layer.tar -t "$tag"
-            crane mutate "$tag" --entrypoint "/$BIN" --label "$LABEL"
-          done <<< "$TAGS"
-
-  manifest:
-    name: Manifest ${{ matrix.bin }}
-    needs: [plan, push]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        bin: ${{ fromJson(needs.plan.outputs.bins) }}
-    steps:
-      - uses: imjasonh/setup-crane@v0.3
-
-      - name: Login to registry
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$TOKEN" | crane auth login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
-
-      - name: Compute tags
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.bin }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.bin }}
           tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Create multi-arch manifest
+      - name: Push images and create manifest
         env:
+          BIN: ${{ matrix.bin }}
           TAGS: ${{ steps.meta.outputs.tags }}
+          ARCHES: ${{ needs.plan.outputs.arches }}
         run: |
           while IFS= read -r tag; do
             [ -z "$tag" ] && continue
-            crane index append -m "${tag}-amd64" -m "${tag}-arm64" -t "$tag"
+            REFS=""
+            for arch in $(echo "$ARCHES" | jq -r '.[]'); do
+              ARCH_TAG="${tag}-${arch}"
+              tar -C "$BIN-${arch}" -c "$BIN" | crane append -f - -t "$ARCH_TAG"
+              crane mutate "$ARCH_TAG" --entrypoint "/$BIN"
+              REFS="$REFS -m $ARCH_TAG"
+            done
+            crane index append $REFS -t "$tag"
           done <<< "$TAGS"
