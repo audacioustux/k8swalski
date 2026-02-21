@@ -114,7 +114,7 @@ jobs:
           LABEL="org.opencontainers.image.source=$SOURCE"
           while IFS= read -r tag; do
             [ -z "$tag" ] && continue
-            crane append -b scratch -f layer.tar -t "$tag"
+            crane append -f layer.tar -t "$tag"
             crane mutate "$tag" --entrypoint "/$BIN" --label "$LABEL"
           done <<< "$TAGS"
 
